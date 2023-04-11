@@ -8,6 +8,6 @@ module.exports = function updateCache(cache, key, upd) {
   if (!cache) { return upd; }
   var had = hasOwn(cache, key), dest = (had ? cache[key] : {});
   if (!had) { cache[key] = dest; } // eslint-disable-line no-param-reassign
-  Object.assign(dest, upd);
-  return dest;
+  if (!upd) { return dest; }
+  return Object.assign(dest, upd);
 };

@@ -1,5 +1,5 @@
 { "name": "pojo-cache-opportunistic-flat-pmb",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shallow-merge a POJO with cached known data if a cache POJO is provided.",
   "keywords": [
     "cache",
