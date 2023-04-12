@@ -5,23 +5,44 @@ import test from 'p-tape';
 import updateCache from '../cache.js';
 
 
+function makeGenCounter() {
+  function gen() {
+    gen.counter += 1;
+    return { 'gen#': gen.counter };
+  };
+  gen.counter = 0;
+  return gen;
+}
+
+
 test('Basic example', async (t) => {
   const cache = {};
-  t.plan(25);
+  t.plan(33);
 
   (function animalSounds() {
     const topic = 'animal sounds';
 
+    const gen = makeGenCounter();
     const addCat = { cat: 'meow' };
-    const learnedCat = updateCache(cache, topic, addCat);
-    t.same(learnedCat, { cat: 'meow' });
+    const learnedCat = updateCache(cache, topic, addCat, gen);
+    t.equal(gen.counter, 1, 'cat gen ran');
+    t.same(learnedCat, { 'gen#': 1, cat: 'meow' }, 'learned cat sound');
     t.notEqual(learnedCat, addCat);
     const uncachedCat = updateCache(null, topic, addCat);
     t.equal(uncachedCat, addCat);
+    const uncachedGenCat = updateCache(null, topic, addCat, gen);
+    t.equal(gen.counter, 2, 'cat gen ran');
+    t.notEqual(uncachedGenCat, addCat);
+    t.same(uncachedGenCat, { 'gen#': 2, cat: 'meow' });
+    const againCat = updateCache(cache, topic, addCat, gen);
+    t.equal(againCat, learnedCat);
+    t.equal(gen.counter, 2, 'cat gen skipped');
 
     const addDog = { dog: 'woof' };
-    const learnedDog = updateCache(cache, topic, addDog);
-    t.same(learnedDog, { cat: 'meow', dog: 'woof' });
+    const learnedDog = updateCache(cache, topic, addDog, gen);
+    t.equal(gen.counter, 2, 'dog gen skipped');
+    t.same(learnedDog, { 'gen#': 1, cat: 'meow', dog: 'woof' },
+      'learned dog sound');
     t.notEqual(learnedDog, addCat);
     t.notEqual(learnedDog, addDog);
     const uncachedDog = updateCache(null, topic, addDog);
@@ -29,10 +50,12 @@ test('Basic example', async (t) => {
 
     const addCow = { cow: 'moo' };
     const learnedCow = updateCache(cache, topic, addCow);
-    t.same(learnedCow, { cat: 'meow', dog: 'woof', cow: 'moo' });
+    t.same(learnedCow, { 'gen#': 1, cat: 'meow', dog: 'woof', cow: 'moo' },
+      'learned cow sound');
     t.notEqual(learnedCow, addCat);
     t.notEqual(learnedCow, addDog);
     t.notEqual(learnedCow, addCow);
+    t.notEqual(learnedCow, gen);
     const uncachedCow = updateCache(null, topic, addCow);
     t.equal(uncachedCow, addCow);
   }());
@@ -66,7 +89,7 @@ test('Basic example', async (t) => {
   }());
 
   t.same(cache, {
-    'animal sounds': { cat: 'meow', dog: 'woof', cow: 'moo' },
+    'animal sounds': { 'gen#': 1, cat: 'meow', dog: 'woof', cow: 'moo' },
     'flower colors': { rose: 'red', violet: 'blue', lily: 'white' },
   });
 

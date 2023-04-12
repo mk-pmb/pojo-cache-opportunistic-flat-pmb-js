@@ -4,10 +4,12 @@
 
 var hasOwn = Function.call.bind(Object.prototype.hasOwnProperty);
 
-module.exports = function updateCache(cache, key, upd) {
-  if (!cache) { return upd; }
-  var had = hasOwn(cache, key), dest = (had ? cache[key] : {});
-  if (!had) { cache[key] = dest; } // eslint-disable-line no-param-reassign
-  if (!upd) { return dest; }
-  return Object.assign(dest, upd);
+module.exports = function updateCache(cache, key, upd, create) {
+  if ((!cache) && (!create)) { return upd; }
+  var had = (cache && hasOwn(cache, key)),
+    dest = (had ? cache[key] : (create || Object)());
+  // eslint-disable-next-line no-param-reassign
+  if (cache && (!had)) { cache[key] = dest; }
+  if (upd) { Object.assign(dest, upd); }
+  return dest;
 };
